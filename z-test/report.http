@@ -1,0 +1,5 @@
+
+### REPORT PRESENSI
+GET http://192.168.1.5:8000/api/report HTTP/1.1
+Accept: application/json
+Authorization: Bearer zITbH5E27qhRWSV8pObVK1hzohtT6ECLV7nXP1n0xp3rO1bFvPL9y99uM9Gn

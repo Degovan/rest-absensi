@@ -1,0 +1,55 @@
+
+### ========== NEW =============
+### PRESENSI
+### MENDAPATKAN DATA USER YANG LOGIN
+GET http://localhost:8000/api/presensi HTTP/1.1
+Accept: application/json
+Authorization: Bearer 2Y8d7Ux57FTwnSf4X5UMR0bV4gymwtPOfCcUvcnmK7tU8uPoPTyGCftJv51E
+
+
+### PRESENSI MASUK
+### MENDAPATKAN DATA USER YANG LOGIN
+GET http://localhost:3000/api/masuk HTTP/1.1
+Accept: application/json
+Authorization: Bearer A4vKAlU0h8f779AIRntOkX1cP79bOJ7gEC5kqtAnjC3XF4WbPoGg2JKXpm2y
+
+
+### PRESENSI MASUK
+### MENGISI PRESENSI MASUK
+
+POST http://localhost:8000/api/masuk HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer 0QxEQPT7gGjnuKRZyTRhEwV9b2hcFbTGqBpx0Yowx8NY85rPDgIiYZeE2Q89
+
+{
+    "location"      : "jakarta",
+    "task_plan"     : "test rencana kerja",
+    "status"        : "W",
+    "latitude"      : "12341234",
+    "longitude"     : "43214321",
+    "ts_id"         : 30
+}
+
+### PRESENSI PULANG
+### MENDAPATKAN DATA USER YANG LOGIN
+GET http://localhost:3000/api/pulang HTTP/1.1
+Accept: application/json
+Authorization: Bearer tmBXd8PPW4cLct9a0E70sbQrm0tFapnTDrEdOq7A95kZCIiBHdCeVErR5B9W
+
+
+### PRESENSI PULANG
+### MENGISI PRESENSI PULANG
+
+YANG INI DICOBA DIPOSTMAN
+
+POST http://localhost:3000/api/pulang HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer fWDVK7kaJODD1qUzRcb6vmQEoAxYtci53WQf73bzPdGrFrmZ0s7hnwQ0pP03
+
+{
+    "ts_id"     : 30,
+    "status"    : "done",
+    "result"    : "asas"
+}
