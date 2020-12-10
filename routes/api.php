@@ -49,4 +49,4 @@ Route::post("/change-password",  "ForgotPasswordController@change_password");
 
 // New V2 API ~ From Degovan
 Route::post("/v2/login", "v2\AuthKaryawanController@login");
-Route::post('/v2/karyawan-absen', 'v2\KaryawanAbsenController@store');
+Route::post('/v2/karyawan-absen', 'v2\KaryawanAbsenController@store')->middleware(['auth.api-token']);
