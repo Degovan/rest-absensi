@@ -16,19 +16,21 @@ class KaryawanAbsenController extends Controller
     private $time_out  = "17:00:00";
     private $time_in   = "08:05:00";
 
-    public function store(Request $request)
+    public function absenMasuk(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'rencana_kerja'     => 'required',
+            'rencana_kerja'     => 'required|array',
         ], [
-            'rencana_kerja.required'    => 'rencana_kerja tidak boleh kosong',
+            'rencana_kerja.required'    => 'rencana kerja tidak boleh kosong',
+            'rencana_kerja.array'       => 'rencana kerja harus bertipe data array',
         ]);
 
         if( $validator->fails() ) {
             return response()->json([
                 'code'      => 401,
-                'message'   => 'Error validation',
-                'errors'    => [
+                'success'   => (boolean) false,
+                'message'   => "error, doesn't pass validation",
+                'data'    => [
                     'old_value'          => [
                         'rencana_kerja'     => $request->rencana_kerja,
                         'lt'                => $request->lt,
@@ -48,9 +50,10 @@ class KaryawanAbsenController extends Controller
 
         if($attendance_exists > 0) {
             return response()->json([
-                'code'    => 400,
+                'code'    => 401,
+                'success' => (boolean) false,
                 'message' => 'error, the employee has made an absence',
-            ], 400);
+            ], 401);
         }
 
         $current_time   = date('H:i:s');
@@ -72,6 +75,7 @@ class KaryawanAbsenController extends Controller
 
         return response()->json([
             'code'              => 200,
+            'success'           => (boolean) true,
             'message'           => 'successfully, the employee has made an absence',
             'data'              => [
                 'absen_harian'      => Attendance::find($attendance->id), 
@@ -108,7 +112,7 @@ class KaryawanAbsenController extends Controller
         return $rencana_kerja_obj;
     }
 
-    public function pulang(Request $request) 
+    public function absenPulang(Request $request) 
     {
         $api_token          = $request->api_token;
         $employee           = User::where('api_token', $api_token)->get()[0];
@@ -117,9 +121,10 @@ class KaryawanAbsenController extends Controller
 
         if( is_null($attendance) ) {
             return response()->json([
-                'code'      => 401,
+                'code'      => 404,
+                'success'   => (boolean) false,
                 'message'   => 'error, the employee has not been absent',
-            ], 401);
+            ], 404);
         }
 
         $current_time   = date('H:i:s');
@@ -133,11 +138,35 @@ class KaryawanAbsenController extends Controller
 
         return response()->json([
             'code'      => 200,
-            'message'   => 'successfully, the employee has made an absence back to home',
+            'success'   => (boolean) true,
+            'message'   => 'successfully, the employee has made an absence return back to home',
             'data'      => [
                 'employee'        => $employee,
                 'absen_harian'    => $attendance,
             ],
         ]);
+    }
+
+    public function deleteAbsen(Request $request)
+    {
+        $api_token          = $request->api_token;
+        $employee           = User::where('api_token', $api_token)->firstOrFail();
+        $current_date       = date('Y-m-d');
+        $attendance         = Attendance::where('employee_id', $employee->id)->where('date', $current_date)->first();
+
+        if( is_null($attendance) ) {
+            return response()->json([
+                'code'      => 404,
+                'success'   => (boolean) false,
+                'message'   => 'error, the employee has not been absent',
+            ], 404);
+        }
+
+        $attendance->delete();
+        return response()->json([
+            'code'    => 200,
+            'success' => (boolean) true,
+            'message' => 'successfully, the employee absent has been deleted',
+        ]); 
     }
 }
