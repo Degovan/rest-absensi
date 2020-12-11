@@ -27,7 +27,7 @@ class KaryawanAbsenController extends Controller
         if( $validator->fails() ) {
             return response()->json([
                 'code'      => 401,
-                'message'   => 'Error validation',
+                'message'   => 'error, validation',
                 'errors'    => [
                     'old_value'          => [
                         'rencana_kerja'     => $request->rencana_kerja,
