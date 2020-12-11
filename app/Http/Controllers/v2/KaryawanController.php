@@ -4,7 +4,7 @@ namespace App\Http\Controllers\v2;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Karyawan;
+use Illuminate\Support\Facades\DB;
 
 class KaryawanController extends Controller
 {
@@ -12,7 +12,18 @@ class KaryawanController extends Controller
     {
 
         $api_token = request('api_token');
-        $karyawan = Karyawan::where('api_token', $api_token)->get()[0];
+
+        $karyawan = DB::table('employees')
+                            ->join('school', 'employees.school_id', '=' , 'school.id')
+                            ->leftJoin('position', 'employees.position_id', '=', 'position.id')
+                            ->join('cabang', 'employees.cabang_id', '=' ,'cabang.id')
+                            ->join('schedules', 'employees.schedule_id', '=' ,'schedules.id')
+                            ->join('status', 'employees.status_id', '=' ,'status.id')
+                            ->join('status', 'employees.status_id', '=' ,'status.id')
+
+                            ->select('employees.*', 'position.description' ,'school.school_name','cabang.namanya', 'schedules.time_in', 'schedules.time_out','status.jenis')
+                            ->where('api_token', $api_token)
+                            ->get();
 
         if ($karyawan === 0) {
             return response()->json([
@@ -26,7 +37,7 @@ class KaryawanController extends Controller
                 "success"   => true,
                 "message"   => "success",
                 "data"      =>  [
-                                'employees' => $karyawan
+                                'employees' => $karyawan 
                             ]
             ], 200);
         }

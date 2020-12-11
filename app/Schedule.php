@@ -14,4 +14,8 @@ class Schedule extends Model
     {
         return $this->hasMany(User::class);
     }
+    public function employee()
+    {
+        return $this->hasOne(Karyawan::class);
+    }
 }
