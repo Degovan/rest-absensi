@@ -19,16 +19,18 @@ class KaryawanAbsenController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'rencana_kerja'     => 'required',
+            'rencana_kerja'     => 'required|array',
         ], [
-            'rencana_kerja.required'    => 'rencana_kerja tidak boleh kosong',
+            'rencana_kerja.required'    => 'rencana kerja tidak boleh kosong',
+            'rencana_kerja.array'       => 'rencana kerja harus bertipe data array',
         ]);
 
         if( $validator->fails() ) {
             return response()->json([
                 'code'      => 401,
-                'message'   => 'error, validation',
-                'errors'    => [
+                'success'   => (boolean) false,
+                'message'   => "error, doesn't pass validation",
+                'data'    => [
                     'old_value'          => [
                         'rencana_kerja'     => $request->rencana_kerja,
                         'lt'                => $request->lt,
@@ -48,9 +50,10 @@ class KaryawanAbsenController extends Controller
 
         if($attendance_exists > 0) {
             return response()->json([
-                'code'    => 400,
+                'code'    => 401,
+                'success' => (boolean) false,
                 'message' => 'error, the employee has made an absence',
-            ], 400);
+            ], 401);
         }
 
         $current_time   = date('H:i:s');
@@ -72,6 +75,7 @@ class KaryawanAbsenController extends Controller
 
         return response()->json([
             'code'              => 200,
+            'success'           => (boolean) true,
             'message'           => 'successfully, the employee has made an absence',
             'data'              => [
                 'absen_harian'      => Attendance::find($attendance->id), 
@@ -118,6 +122,7 @@ class KaryawanAbsenController extends Controller
         if( is_null($attendance) ) {
             return response()->json([
                 'code'      => 401,
+                'success'   => (boolean) false,
                 'message'   => 'error, the employee has not been absent',
             ], 401);
         }
@@ -133,7 +138,8 @@ class KaryawanAbsenController extends Controller
 
         return response()->json([
             'code'      => 200,
-            'message'   => 'successfully, the employee has made an absence back to home',
+            'success'   => (boolean) true,
+            'message'   => 'successfully, the employee has made an absence return back to home',
             'data'      => [
                 'employee'        => $employee,
                 'absen_harian'    => $attendance,

@@ -24,7 +24,7 @@ class AuthKaryawanController extends Controller
 
         if($validator->fails()) {
             return response()->json([
-                'code'      => 400,
+                'code'      => 401,
                 'success'   => (boolean) false,
                 'message'   => "error, doesn't pass validation",
                 'data'      => [
@@ -33,7 +33,7 @@ class AuthKaryawanController extends Controller
                     ],
                     'errors_validation' => $validator->errors(),
                 ]
-            ], 400);
+            ], 401);
         }
 
         $credentials = $request->only('email', 'password');
