@@ -25,6 +25,7 @@ class AuthApiToken
 
         if($validator->fails()) {
             return response()->json([
+                'code'    => 401,
                 'message' => 'token is required',
             ], 401);
         }
@@ -35,6 +36,7 @@ class AuthApiToken
 
         if($employee->count() < 1) {
             return response()->json([
+                'code'    => 403,
                 'message' => 'token is invalid',
             ], 403);
         }
