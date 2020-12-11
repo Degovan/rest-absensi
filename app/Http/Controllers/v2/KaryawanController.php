@@ -13,14 +13,6 @@ class KaryawanController extends Controller
         $api_token = request('api_token');
         $karyawan = User::with(['school', 'position', 'schedule', 'jadwal', 'cabang', 'status'])->where('api_token', $api_token)->get();
 
-        if (count($karyawan) == 0) {
-            return response()->json([
-                'code'      => 400,
-                'success'   => (boolean) false,
-                'message'   => 'error, employee not found',
-            ], 400);
-        }
-
         return response()->json([
             'code'      => 200,
             'success'   => (boolean) true,

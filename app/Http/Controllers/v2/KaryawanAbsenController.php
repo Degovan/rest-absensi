@@ -13,8 +13,6 @@ use App\Attendance;
 
 class KaryawanAbsenController extends Controller
 {
-    private $time_out  = "17:00:00";
-    private $time_in   = "08:05:00";
 
     public function absenMasuk(Request $request)
     {
@@ -57,26 +55,43 @@ class KaryawanAbsenController extends Controller
         }
 
         $current_time   = date('H:i:s');
-        $status         = $this->time_in >= $current_time;
-        $telat          = ( !$status ) ? ( strtotime($current_time) - strtotime($this->time_in) ) / 60 : 0;
+        $time_in        = $employee->jadwal->time_in;
+        $status         = $time_in >= $current_time;
+        $telat          = ( !$status ) ? ( strtotime($current_time) - strtotime($time_in) ) / 60 : 0;
+
+        $rencana_kerja_obj = $this->storeRencanaKerja($request->rencana_kerja, $employee);
+
+        if(!$rencana_kerja_obj) {
+            return response()->json([
+                'code'    => 401,
+                'success' => (boolean) false,
+                'message' => 'rencana kerja must be array of object and have key : text & status',
+                'data'    => [
+                    'old_value'          => [
+                        'rencana_kerja'     => $request->rencana_kerja,
+                        'lt'                => $request->lt,
+                        'lo'                => $request->lo,
+                        'address'           => $request->address,
+                    ],
+                ]
+            ], 401);
+        }
 
         $attendance = Attendance::create([
             'employee_id'   => $employee->id,
             'date'          => $current_date,
             'time_in'       => $current_time,
-            'status'        => $this->time_in >= $current_time,
+            'status'        => $time_in >= $current_time,
             'telat'         => $telat,
             'latitude'      => $request->lt,
             'longitude'     => $request->lo,
             'address'       => $request->address,
         ]);
 
-        $rencana_kerja_obj = $this->storeRencanaKerja($request->rencana_kerja, $employee);
-
         return response()->json([
             'code'              => 200,
             'success'           => (boolean) true,
-            'message'           => 'successfully, the employee has made an absence',
+            'message'           => 'successfully, the employee absence has been created',
             'data'              => [
                 'absen_harian'      => Attendance::find($attendance->id), 
                 'rencana_kerja'     => Harian::find($rencana_kerja_obj->id),
@@ -91,7 +106,23 @@ class KaryawanAbsenController extends Controller
      */
     public function storeRencanaKerja($rencana_kerja_arr, $employee)
     {
-        $current_date       = date('Y-m-d');
+        $current_date            = date('Y-m-d');
+        $valid_rencana_kerja     = [];
+
+        if(gettype($rencana_kerja_arr[0]) != 'array') {
+            return false;
+        }
+
+        foreach($rencana_kerja_arr as $rencana_kerja) {
+            if(!array_key_exists('text', $rencana_kerja) && !array_key_exists('status', $rencana_kerja)) {
+                return false;
+            } else {
+                $valid_rencana_kerja[] = [
+                    'text'     => $rencana_kerja['text'],
+                    'status'   => $rencana_kerja['status']
+                ];
+            }
+        }
 
         $rencana_kerja_obj = Harian::create([
             'date_harian'       => $current_date,
@@ -103,7 +134,7 @@ class KaryawanAbsenController extends Controller
             'nohp'              => $employee->contact_info,
             'job'               => $employee->position->description,
             'position_id'       => $employee->position_id,
-            'renke'             => json_encode($rencana_kerja_arr),
+            'renke'             => json_encode($valid_rencana_kerja),
             'status'            => '-',
             'evaluasi'          => '-',
             'solusi'            => '-',
