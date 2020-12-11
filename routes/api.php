@@ -51,3 +51,4 @@ Route::post("/change-password",  "ForgotPasswordController@change_password");
 Route::post("/v2/login", "v2\AuthKaryawanController@login");
 Route::get("/v2/karyawan", "v2\KaryawanController@index");
 Route::post('/v2/karyawan-absen', 'v2\KaryawanAbsenController@store')->middleware(['auth.api-token']);
+Route::post('/v2/karyawan-pulang', 'v2\KaryawanAbsenController@pulang')->middleware(['auth.api-token']);
