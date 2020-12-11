@@ -67,4 +67,20 @@ class AuthKaryawanController extends Controller
             ], 400);
         }
     }
+
+    public function logout(Request $request)
+    {
+        $api_token          = $request->api_token;
+        $employee           = User::where('api_token', $api_token)->firstOrFail();
+
+        $employee->update([
+            'api_token'     => '',
+        ]);
+
+        return response()->json([
+            'code'      => 200,
+            'success'   => (boolean) true,
+            'message'   => 'successfully, the employee has been logged out and api_token has been deleted',
+        ], 200);
+    }
 }
