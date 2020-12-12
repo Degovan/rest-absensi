@@ -34,6 +34,7 @@ class KaryawanAbsenController extends Controller
                         'lt'                => $request->lt,
                         'lo'                => $request->lo,
                         'address'           => $request->address,
+                        'hasil_kerja'       => $request->hasil_kerja
                     ],
                     'errors_validation'  => $validator->errors(),
                 ],
@@ -59,7 +60,7 @@ class KaryawanAbsenController extends Controller
         $status         = $time_in >= $current_time;
         $telat          = ( !$status ) ? ( strtotime($current_time) - strtotime($time_in) ) / 60 : 0;
 
-        $rencana_kerja_obj = $this->storeRencanaKerja($request->rencana_kerja, $employee);
+        $rencana_kerja_obj = $this->storeRencanaKerja($request->rencana_kerja, $request->hasil_kerja, $employee);
 
         if(!$rencana_kerja_obj) {
             return response()->json([
@@ -72,6 +73,7 @@ class KaryawanAbsenController extends Controller
                         'lt'                => $request->lt,
                         'lo'                => $request->lo,
                         'address'           => $request->address,
+                        'hasil_kerja'       => $request->hasil_kerja,     
                     ],
                 ]
             ], 401);
@@ -104,7 +106,7 @@ class KaryawanAbsenController extends Controller
      *
      * @param array rencana_kerja
      */
-    public function storeRencanaKerja($rencana_kerja_arr, $employee)
+    public function storeRencanaKerja($rencana_kerja_arr, $hasil_kerja, $employee)
     {
         $current_date            = date('Y-m-d');
         $valid_rencana_kerja     = [];
@@ -138,6 +140,7 @@ class KaryawanAbsenController extends Controller
             'status'            => '-',
             'evaluasi'          => '-',
             'solusi'            => '-',
+            'hasil_kerja'       => $hasil_kerja,
         ]);
 
         return $rencana_kerja_obj;
@@ -145,6 +148,67 @@ class KaryawanAbsenController extends Controller
 
     public function absenPulang(Request $request) 
     {
+        $validator = Validator::make($request->all(), [
+            'rencana_kerja'     => 'required|array',
+        ], [
+            'rencana_kerja.required'    => 'rencana kerja tidak boleh kosong',
+            'rencana_kerja.array'       => 'rencana kerja harus bertipe data array',
+        ]);
+
+        if( $validator->fails() ) {
+            return response()->json([
+                'code'      => 401,
+                'success'   => (boolean) false,
+                'message'   => "error, doesn't pass validation",
+                'data'    => [
+                    'old_value'          => [
+                        'rencana_kerja'     => $request->rencana_kerja,
+                        'lt'                => $request->lt,
+                        'lo'                => $request->lo,
+                        'address'           => $request->address,
+                        'hasil_kerja'       => $request->hasil_kerja
+                    ],
+                    'errors_validation'  => $validator->errors(),
+                ],
+            ], 401);
+        }
+
+        if(gettype($request->rencana_kerja[0]) != 'array') {
+            return response()->json([
+                'code'    => 401,
+                'success' => (boolean) false,
+                'message' => 'rencana kerja must be array of object and have key : text & status',
+                'data'    => [
+                    'old_value'          => [
+                        'rencana_kerja'     => $request->rencana_kerja,
+                        'lt'                => $request->lt,
+                        'lo'                => $request->lo,
+                        'address'           => $request->address,
+                        'hasil_kerja'       => $request->hasil_kerja,     
+                    ],
+                ]
+            ], 401);
+        }
+
+        foreach($request->rencana_kerja as $rencana_kerja) {
+            if(!array_key_exists('text', $rencana_kerja) && !array_key_exists('status', $rencana_kerja)) {
+                return response()->json([
+                'code'    => 401,
+                'success' => (boolean) false,
+                'message' => 'rencana kerja must be array of object and have key : text & status',
+                'data'    => [
+                    'old_value'          => [
+                        'rencana_kerja'     => $request->rencana_kerja,
+                        'lt'                => $request->lt,
+                        'lo'                => $request->lo,
+                        'address'           => $request->address,
+                        'hasil_kerja'       => $request->hasil_kerja,     
+                    ],
+                ]
+            ], 401);
+            }
+        }
+
         $api_token          = $request->api_token;
         $employee           = User::where('api_token', $api_token)->get()[0];
         $current_date       = date('Y-m-d');
@@ -163,8 +227,13 @@ class KaryawanAbsenController extends Controller
         $minutes        = $hour * 60 % 60;
 
         $attendance->update([
-            'time_out'  => $current_time,
-            'num_hr'    => (double) floor($hour) . '.' . floor($minutes),
+            'time_out'      => $current_time,
+            'num_hr'        => (double) floor($hour) . '.' . floor($minutes),
+        ]);
+
+        $rencana_kerja = Harian::where('date_harian', $current_date)->where('employee_id', $employee->id)->update([
+            'renke'         => json_encode($request->rencana_kerja),
+            'hasil_kerja'   => $request->hasil_kerja,
         ]);
 
         return response()->json([
@@ -174,6 +243,7 @@ class KaryawanAbsenController extends Controller
             'data'      => [
                 'employee'        => $employee,
                 'absen_harian'    => $attendance,
+                'rencana_kerja'   => Harian::where('date_harian', $current_date)->where('employee_id', $employee->id)->firstOrFail(),
             ],
         ]);
     }
