@@ -38,7 +38,7 @@ class KaryawanController extends Controller
             'namaso'        => 'required|max:200',
             'created_on'    => 'sometimes|date',
             'password'      => 'required|max:100',
-            'email'         => 'required|max:50',
+            'email'         => 'required|max:50|unique:employees',
             'active'        => 'required|max:1',
             'photo'         => 'required',
         ]);

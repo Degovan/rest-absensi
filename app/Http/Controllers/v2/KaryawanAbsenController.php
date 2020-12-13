@@ -96,7 +96,7 @@ class KaryawanAbsenController extends Controller
             'message'           => 'successfully, the employee absence has been created',
             'data'              => [
                 'absen_harian'      => Attendance::find($attendance->id), 
-                'rencana_kerja'     => Harian::find($rencana_kerja_obj->id),
+                'rencana_kerja'     => Harian::where('date_harian', $current_date)->where('employee_id', $employee->id)->get(),
             ]
         ], 200);
     }
@@ -227,7 +227,7 @@ class KaryawanAbsenController extends Controller
             'num_hr'        => (double) floor($hour) . '.' . floor($minutes),
         ]);
 
-        $rencana_kerja_db_arr = Harian::where('date_harian', $current_date)->where('employee_id', $employee->id)->limit(2)->get();
+        $rencana_kerja_db_arr = Harian::where('date_harian', $current_date)->where('employee_id', $employee->id)->get();
 
         foreach($rencana_kerja_db_arr as $rencana_kerja_db) {
             $rencana_kerja_db->delete();
@@ -278,8 +278,14 @@ class KaryawanAbsenController extends Controller
                 'message'   => 'error, the employee has not been absent',
             ], 404);
         }
-
         $attendance->delete();
+        
+        $rencana_kerja_db_arr = Harian::where('date_harian', $current_date)->where('employee_id', $employee->id)->get();
+
+        foreach($rencana_kerja_db_arr as $rencana_kerja_db) {
+            $rencana_kerja_db->delete();
+        }
+        
         return response()->json([
             'code'    => 200,
             'success' => (boolean) true,
