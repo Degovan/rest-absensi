@@ -49,6 +49,8 @@ Route::post("/change-password",  "ForgotPasswordController@change_password");
 
 // New V2 API ~ From Degovan
 Route::post('/v2/login', 'v2\AuthKaryawanController@login');
+
+// For Karyawan
 Route::middleware(['auth.api-token'])->group(function() {
     Route::get("/v2/karyawan", "v2\KaryawanController@index");
     Route::post('/v2/karyawan-absen', 'v2\KaryawanAbsenController@absenMasuk');
@@ -56,3 +58,8 @@ Route::middleware(['auth.api-token'])->group(function() {
     Route::post('/v2/karyawan-absen/delete', 'v2\KaryawanAbsenController@deleteAbsen');
     Route::post('/v2/logout', 'v2\AuthKaryawanController@logout');
 });
+
+// For Admin
+Route::post('/v2/admin/karyawan', 'v2\Admin\KaryawanController@store');
+Route::get('/v2/karyawan-absen', 'v2\Admin\KaryawanAbsenController@index');
+Route::get('/v2/rencana-kerja', 'v2\Admin\RencanaKerjaController@index');

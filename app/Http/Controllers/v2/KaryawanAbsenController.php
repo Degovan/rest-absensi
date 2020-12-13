@@ -109,7 +109,6 @@ class KaryawanAbsenController extends Controller
     public function storeRencanaKerja($rencana_kerja_arr, $hasil_kerja, $employee)
     {
         $current_date            = date('Y-m-d');
-        $valid_rencana_kerja     = [];
 
         if(gettype($rencana_kerja_arr[0]) != 'array') {
             return false;
@@ -118,30 +117,27 @@ class KaryawanAbsenController extends Controller
         foreach($rencana_kerja_arr as $rencana_kerja) {
             if(!array_key_exists('text', $rencana_kerja) && !array_key_exists('status', $rencana_kerja)) {
                 return false;
-            } else {
-                $valid_rencana_kerja[] = [
-                    'text'     => $rencana_kerja['text'],
-                    'status'   => $rencana_kerja['status']
-                ];
             }
         }
 
-        $rencana_kerja_obj = Harian::create([
-            'date_harian'       => $current_date,
-            'employee_id'       => $employee->id,
-            'school_id'         => $employee->school_id,
-            'cabang_id'         => $employee->cabang_id,
-            'lokasi_id'         => 1,
-            'jabker_id'         => 1,
-            'nohp'              => $employee->contact_info,
-            'job'               => $employee->position->description,
-            'position_id'       => $employee->position_id,
-            'renke'             => json_encode($valid_rencana_kerja),
-            'status'            => '-',
-            'evaluasi'          => '-',
-            'solusi'            => '-',
-            'hasil_kerja'       => $hasil_kerja,
-        ]);
+        foreach($rencana_kerja_arr as $rencana_kerja) {
+            $rencana_kerja_obj = Harian::create([
+                'date_harian'       => $current_date,
+                'employee_id'       => $employee->id,
+                'school_id'         => $employee->school_id,
+                'cabang_id'         => $employee->cabang_id,
+                'lokasi_id'         => 1,
+                'jabker_id'         => 1,
+                'nohp'              => $employee->contact_info,
+                'job'               => $employee->position->description,
+                'position_id'       => $employee->position_id,
+                'renke'             => $rencana_kerja['text'],
+                'status'            => $rencana_kerja['status'],
+                'evaluasi'          => '-',
+                'solusi'            => '-',
+                'hasil_kerja'       => $hasil_kerja,
+            ]);
+        }
 
         return $rencana_kerja_obj;
     }
@@ -193,19 +189,19 @@ class KaryawanAbsenController extends Controller
         foreach($request->rencana_kerja as $rencana_kerja) {
             if(!array_key_exists('text', $rencana_kerja) && !array_key_exists('status', $rencana_kerja)) {
                 return response()->json([
-                'code'    => 401,
-                'success' => (boolean) false,
-                'message' => 'rencana kerja must be array of object and have key : text & status',
-                'data'    => [
-                    'old_value'          => [
-                        'rencana_kerja'     => $request->rencana_kerja,
-                        'lt'                => $request->lt,
-                        'lo'                => $request->lo,
-                        'address'           => $request->address,
-                        'hasil_kerja'       => $request->hasil_kerja,     
-                    ],
-                ]
-            ], 401);
+                    'code'    => 401,
+                    'success' => (boolean) false,
+                    'message' => 'rencana kerja must be array of object and have key : text & status',
+                    'data'    => [
+                        'old_value'          => [
+                            'rencana_kerja'     => $request->rencana_kerja,
+                            'lt'                => $request->lt,
+                            'lo'                => $request->lo,
+                            'address'           => $request->address,
+                            'hasil_kerja'       => $request->hasil_kerja,     
+                        ],
+                    ]
+                ], 401);
             }
         }
 
@@ -231,10 +227,30 @@ class KaryawanAbsenController extends Controller
             'num_hr'        => (double) floor($hour) . '.' . floor($minutes),
         ]);
 
-        $rencana_kerja = Harian::where('date_harian', $current_date)->where('employee_id', $employee->id)->update([
-            'renke'         => json_encode($request->rencana_kerja),
-            'hasil_kerja'   => $request->hasil_kerja,
-        ]);
+        $rencana_kerja_db_arr = Harian::where('date_harian', $current_date)->where('employee_id', $employee->id)->limit(2)->get();
+
+        foreach($rencana_kerja_db_arr as $rencana_kerja_db) {
+            $rencana_kerja_db->delete();
+        }
+
+        foreach($request->rencana_kerja as $rencana_kerja) {
+            $rencana_kerja_obj = Harian::create([
+                'date_harian'       => $current_date,
+                'employee_id'       => $employee->id,
+                'school_id'         => $employee->school_id,
+                'cabang_id'         => $employee->cabang_id,
+                'lokasi_id'         => 1,
+                'jabker_id'         => 1,
+                'nohp'              => $employee->contact_info,
+                'job'               => $employee->position->description,
+                'position_id'       => $employee->position_id,
+                'renke'             => $rencana_kerja['text'],
+                'status'            => $rencana_kerja['status'],
+                'evaluasi'          => '-',
+                'solusi'            => '-',
+                'hasil_kerja'       => $request->hasil_kerja,
+            ]);
+        }
 
         return response()->json([
             'code'      => 200,
@@ -243,9 +259,9 @@ class KaryawanAbsenController extends Controller
             'data'      => [
                 'employee'        => $employee,
                 'absen_harian'    => $attendance,
-                'rencana_kerja'   => Harian::where('date_harian', $current_date)->where('employee_id', $employee->id)->firstOrFail(),
+                'rencana_kerja'   => Harian::where('date_harian', $current_date)->where('employee_id', $employee->id)->get(),
             ],
-        ]);
+        ], 200);
     }
 
     public function deleteAbsen(Request $request)
@@ -268,6 +284,6 @@ class KaryawanAbsenController extends Controller
             'code'    => 200,
             'success' => (boolean) true,
             'message' => 'successfully, the employee absent has been deleted',
-        ]); 
+        ], 200); 
     }
 }
