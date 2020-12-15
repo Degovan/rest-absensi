@@ -9,7 +9,7 @@ class Absen extends Model
     protected $primaryKey = 'karyawan_id';
     protected $table = 'absen';
 
-    protected $fillable = ['karyawan_id', 'status', 'alasan', 'photo', 'tanggal', 'jam_masuk', 'jam_pulang', 'lama_kerja'];
+    protected $fillable = ['karyawan_id', 'status', 'alasan', 'photo', 'tanggal', 'jam_masuk', 'jam_pulang', 'lama_kerja', 'hasil_kerja'];
 
     public $timestamps = false;
 }
