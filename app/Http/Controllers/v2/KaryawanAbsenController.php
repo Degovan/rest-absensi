@@ -32,10 +32,6 @@ class KaryawanAbsenController extends Controller
                 'data'    => [
                     'old_value'          => [
                         'rencana_kerja'     => $request->rencana_kerja,
-                        'lt'                => $request->lt,
-                        'lo'                => $request->lo,
-                        'address'           => $request->address,
-                        'hasil_kerja'       => $request->hasil_kerja
                     ],
                     'errors_validation'  => $validator->errors(),
                 ],
@@ -46,7 +42,7 @@ class KaryawanAbsenController extends Controller
         $api_token          = $request->api_token;
         $karyawan           = Karyawan::where('api_token', $api_token)->get()[0];
         $current_date       = date('Y-m-d');
-        $attendance_exists  = Absen::where('karyawan_id', $karyawan->id)->where('tanggal', $current_date)->count();
+        $attendance_exists  = Absen::where('karyawan_id', $karyawan->karyawan_id)->where('tanggal', $current_date)->count();
 
         if($attendance_exists > 0) {
             return response()->json([
@@ -122,7 +118,7 @@ class KaryawanAbsenController extends Controller
         foreach($rencana_kerja_arr as $rencana_kerja) {
             $arr_rencana_kerja_obj[] = Raker::create([
                 'karyawan_id'       => $karyawan->karyawan_id,
-                'title'             => $rencana_kerja['text'],
+                'title'             => $rencana_kerja['title'],
                 'desk'              => $rencana_kerja['deskripsi'],
                 'tgl_mulai'         => $current_date,
                 'tgl_selesai'       => $current_date,
@@ -130,7 +126,7 @@ class KaryawanAbsenController extends Controller
                 'note'              => 'ok',
                 'solusi'            => 'ini solusi',
                 'photo'             => 'ini photo',
-                'nilai'             => 5,
+                'nilai'             => 1,
             ]);
         }
 
@@ -154,10 +150,6 @@ class KaryawanAbsenController extends Controller
                 'data'    => [
                     'old_value'          => [
                         'rencana_kerja'     => $request->rencana_kerja,
-                        'lt'                => $request->lt,
-                        'lo'                => $request->lo,
-                        'address'           => $request->address,
-                        'hasil_kerja'       => $request->hasil_kerja
                     ],
                     'errors_validation'  => $validator->errors(),
                 ],
@@ -172,10 +164,6 @@ class KaryawanAbsenController extends Controller
                 'data'    => [
                     'old_value'          => [
                         'rencana_kerja'     => $request->rencana_kerja,
-                        'lt'                => $request->lt,
-                        'lo'                => $request->lo,
-                        'address'           => $request->address,
-                        'hasil_kerja'       => $request->hasil_kerja,     
                     ],
                 ]
             ], 401);
@@ -190,10 +178,6 @@ class KaryawanAbsenController extends Controller
                     'data'    => [
                         'old_value'          => [
                             'rencana_kerja'     => $request->rencana_kerja,
-                            'lt'                => $request->lt,
-                            'lo'                => $request->lo,
-                            'address'           => $request->address,
-                            'hasil_kerja'       => $request->hasil_kerja,     
                         ],
                     ]
                 ], 401);
@@ -228,7 +212,7 @@ class KaryawanAbsenController extends Controller
 
         foreach($rencana_kerja_db_arr as $key => $rencana_kerja) {
             $rencana_kerja_obj[] = $rencana_kerja->update([
-                'title'             => $request->rencana_kerja[$key]['text'],
+                'title'             => $request->rencana_kerja[$key]['title'],
                 'desk'              => $request->rencana_kerja[$key]['deskripsi'],
                 'status'            => $request->rencana_kerja[$key]['status'],
             ]);
