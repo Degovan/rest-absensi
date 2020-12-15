@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 use App\Models\Raker;
+use App\Models\Jobdesk;
 use App\Models\Karyawan;
 
 class RencanaKerjaController extends Controller
@@ -15,8 +16,21 @@ class RencanaKerjaController extends Controller
         $api_token              = $request->api_token;
         $current_date           = date('Y-m-d');
         $karyawan               = Karyawan::where('api_token', $api_token)->firstOrFail();
-        $raker_today            = Raker::where('tgl_mulai', $current_date)->where('karyawan_id', $karyawan->karyawan_id)->get();
+        $raker_today            = Raker::select('jobdesk.name as jobdesk', 'raker.*')
+                                            ->join('jobdesk', 'raker.jobdesk_id', '=', 'jobdesk.jobdesk_id')
+                                            ->where('tgl_mulai', '=', $current_date)
+                                            ->orWhere('raker.status', '=', 'progress')
+                                            ->orderBy('tgl_mulai', 'DESC')->get();
         
+        $arr_raker_today = [];
+        foreach($raker_today as $rt) {
+            $arr_raker_today[] = [
+                'jobdesk_id'    => $rt->jobdesk_id,
+                'jobdesk'       => $rt->jobdesk,
+                'rencana_kerja' => Raker::where('jobdesk_id', '=', $rt->jobdesk_id)->where('karyawan_id', '=', $karyawan->karyawan_id)->get(),
+            ];
+        }
+
         if( count($raker_today) == 0 ) {
             return response()->json([
                 'code'      => 404,
@@ -28,9 +42,7 @@ class RencanaKerjaController extends Controller
                 'code'      => 200,
                 'success'   => (boolean) true,
                 'message'   => 'successfully, mendapatkan rencana kerja hari ini',
-                'data'      => [
-                    'rencana_kerja' => $raker_today
-                ]
+                'data'      => $arr_raker_today,
             ]);
         }
     }

@@ -126,8 +126,8 @@ class KaryawanAbsenController extends Controller
         foreach($rencana_kerja_arr as $rencana_kerja) {
             $arr_rencana_kerja_obj[] = Raker::create([
                 'karyawan_id'       => $karyawan->karyawan_id,
-                'title'             => $rencana_kerja['title'],
-                'desk'              => $rencana_kerja['deskripsi'],
+                'jobdesk_id'        => $rencana_kerja['jobdesk_id'],
+                'desk'              => $rencana_kerja['title'],
                 'tgl_mulai'         => $current_date,
                 'tgl_selesai'       => null,
                 'status'            => $rencana_kerja['status'],
