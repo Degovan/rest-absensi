@@ -17,28 +17,6 @@ class KaryawanAbsenController extends Controller
 
     public function absenMasuk(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'rencana_kerja'     => 'required|array',
-        ], [
-            'rencana_kerja.required'    => 'rencana kerja tidak boleh kosong',
-            'rencana_kerja.array'       => 'rencana kerja harus bertipe data array',
-        ]);
-
-        if( $validator->fails() ) {
-            return response()->json([
-                'code'      => 401,
-                'success'   => (boolean) false,
-                'message'   => "error, doesn't pass validation",
-                'data'    => [
-                    'old_value'          => [
-                        'rencana_kerja'     => $request->rencana_kerja,
-                    ],
-                    'errors_validation'  => $validator->errors(),
-                ],
-            ], 401);
-        }
-        
-        // Absen 
         $api_token          = $request->api_token;
         $karyawan           = Karyawan::where('api_token', $api_token)->get()[0];
         $current_date       = date('Y-m-d');
@@ -54,7 +32,11 @@ class KaryawanAbsenController extends Controller
 
         $current_time   = date('H:i:s');
 
-        $rencana_kerja_obj = $this->storeRencanaKerja($request->rencana_kerja, $karyawan);
+        if($request->rencana_kerja == '' || $request->rencana_kerja == null || $request->rencana_kerja == []) {
+            $rencana_kerja_obj = (boolean) true;
+        } else {
+            $rencana_kerja_obj = $this->storeRencanaKerja($request->rencana_kerja, $karyawan);
+        }
 
         if(!$rencana_kerja_obj) {
             return response()->json([
@@ -88,7 +70,7 @@ class KaryawanAbsenController extends Controller
             'message'           => 'successfully, the employee absence has been created',
             'data'              => [
                 'absen_harian'      => Absen::where('karyawan_id', $karyawan->karyawan_id)->orderBy('absen_id', 'DESC')->firstOrFail(), 
-                'rencana_kerja'     => $rencana_kerja_obj,
+                'rencana_kerja'     => $rencana_kerja_obj === true ? [] : $rencana_kerja_obj,
             ]
         ], 200);
     }
@@ -143,27 +125,6 @@ class KaryawanAbsenController extends Controller
 
     public function absenPulang(Request $request) 
     {
-        $validator = Validator::make($request->all(), [
-            'rencana_kerja'     => 'required|array',
-        ], [
-            'rencana_kerja.required'    => 'rencana kerja tidak boleh kosong',
-            'rencana_kerja.array'       => 'rencana kerja harus bertipe data array',
-        ]);
-
-        if( $validator->fails() ) {
-            return response()->json([
-                'code'      => 401,
-                'success'   => (boolean) false,
-                'message'   => "error, doesn't pass validation",
-                'data'    => [
-                    'old_value'          => [
-                        'rencana_kerja'     => $request->rencana_kerja,
-                    ],
-                    'errors_validation'  => $validator->errors(),
-                ],
-            ], 401);
-        }
-
         if(gettype($request->rencana_kerja[0]) != 'array') {
             return response()->json([
                 'code'    => 401,
@@ -216,7 +177,6 @@ class KaryawanAbsenController extends Controller
         ]);
 
         $rencana_kerja_db_arr = Raker::where('tgl_mulai', $current_date)->where('karyawan_id', $karyawan->karyawan_id)->get();
-
         $rencana_kerja_obj = [];
 
         foreach($request->rencana_kerja as $rencana_kerja) {
