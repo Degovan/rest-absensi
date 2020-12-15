@@ -9,104 +9,95 @@ use Illuminate\Support\Facades\Hash;
 use DB;
 
 use App\User;
+use App\Karyawan;
 
 class KaryawanController extends Controller
 {
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'school_id'     => 'required|numeric',
-            'firstname'     => 'required|max:50',
-            'lastname'      => 'required|max:50',
-            'address'       => 'required|max:100',
-            'birthdate'     => 'required|date',
-            'tgl_masuk'     => 'required|date',
-            'contact_info'  => 'required|max:100',
-            'noktp'         => 'required|max:100',
-            'nik'           => 'required|numeric',
-            'gaji_pokok'    => 'required|numeric',
-            'pendidikan'    => 'required|max:100',
-            'domisi'        => 'required|max:100',
-            'gender'        => 'required|max:10',
-            'position_id'   => 'required|numeric',
-            'hpsodara'      => 'required|max:100',
-            'namaso'        => 'required|max:100',
-            'namaso'        => 'required|max:100',
-            'namaso'        => 'required|max:100',
-            'namaso'        => 'required|max:100',
-            'namaso'        => 'required|max:100',
-            'namaso'        => 'required|max:200',
-            'created_on'    => 'sometimes|date',
-            'password'      => 'required|max:100',
-            'email'         => 'required|max:50|unique:employees',
-            'active'        => 'required|max:1',
-            'photo'         => 'required',
-        ]);
+        // $validator = Validator::make($request->all(), [
+        //     'school_id'     => 'required|numeric',
+        //     'firstname'     => 'required|max:50',
+        //     'lastname'      => 'required|max:50',
+        //     'address'       => 'required|max:100',
+        //     'birthdate'     => 'required|date',
+        //     'tgl_masuk'     => 'required|date',
+        //     'contact_info'  => 'required|max:100',
+        //     'noktp'         => 'required|max:100',
+        //     'nik'           => 'required|numeric',
+        //     'gaji_pokok'    => 'required|numeric',
+        //     'pendidikan'    => 'required|max:100',
+        //     'domisi'        => 'required|max:100',
+        //     'gender'        => 'required|max:10',
+        //     'position_id'   => 'required|numeric',
+        //     'hpsodara'      => 'required|max:100',
+        //     'namaso'        => 'required|max:100',
+        //     'namaso'        => 'required|max:100',
+        //     'namaso'        => 'required|max:100',
+        //     'namaso'        => 'required|max:100',
+        //     'namaso'        => 'required|max:100',
+        //     'namaso'        => 'required|max:200',
+        //     'created_on'    => 'sometimes|date',
+        //     'password'      => 'required|max:100',
+        //     'email'         => 'required|max:50|unique:employees',
+        //     'active'        => 'required|max:1',
+        //     'photo'         => 'required',
+        // ]);
 
-        if( $validator->fails()) {
-            return response()->json([
-                'code'      => 401,
-                'success'   => (boolean) false,
-                'message'   => "Error, doesn't pass validation",
-                "data"      => [
-                    'old_value'         => $request->all(),
-                    'errors_message'    => $validator->errors()
-                ]
-            ], 401);
-        }
+        // if( $validator->fails()) {
+        //     return response()->json([
+        //         'code'      => 401,
+        //         'success'   => (boolean) false,
+        //         'message'   => "Error, doesn't pass validation",
+        //         "data"      => [
+        //             'old_value'         => $request->all(),
+        //             'errors_message'    => $validator->errors()
+        //         ]
+        //     ], 401);
+        // }
 
-        $employee_id = $this->generateEmployeeId(3, 9);
-        $error_foreign = $this->validateForeign([
-            'school'        => $request->school_id,
-            'position'      => $request->position_id,
-            'schedules'     => $request->schedule_id,
-            'jadwals'       => $request->jadwal_id,
-            'cabang'        => $request->cabang_id,
-            'status'        => $request->status_id, 
-        ]);
+        $kd_karyawan = $this->generateEmployeeId(3, 9);
+        // $error_foreign = $this->validateForeign([
+        //     'school'        => $request->school_id,
+        //     'position'      => $request->position_id,
+        //     'schedules'     => $request->schedule_id,
+        //     'jadwals'       => $request->jadwal_id,
+        //     'cabang'        => $request->cabang_id,
+        //     'status'        => $request->status_id, 
+        // ]);
 
-        if( $error_foreign ) {
-            return response()->json([
-                'code'      => 401,
-                'success'   => (boolean) false,
-                'message'   => $error_foreign,
-                'data'      => [
-                    'old_value'     => $request->all(),
-                ],
-            ], 401);
-        }
+        // if( $error_foreign ) {
+        //     return response()->json([
+        //         'code'      => 401,
+        //         'success'   => (boolean) false,
+        //         'message'   => $error_foreign,
+        //         'data'      => [
+        //             'old_value'     => $request->all(),
+        //         ],
+        //     ], 401);
+        // }
 
-        $employee = User::create([
-            'employee_id'   => $employee_id,
-            'school_id'     => $request->school_id,
-            'firstname'     => $request->firstname,
-            'lastname'      => $request->lastname,
-            'address'       => $request->address,
-            'birthdate'     => $request->birthdate,
-            'tgl_masuk'     => $request->tgl_masuk,
-            'contact_info'  => $request->contact_info,
-            'noktp'         => $request->noktp,
-            'nik'           => $request->nik,
-            'gaji_pokok'    => $request->gaji_pokok,
-            'pendidikan'    => $request->pendidikan,
-            'domisi'        => $request->domisi,
-            'gender'        => $request->gender,
-            'position_id'   => $request->position_id,
-            'hpsodara'      => $request->hpsodara,
-            'namaso'        => $request->namaso,
+        $employee = Karyawan::create([
+            'kd_karyawan'   => $kd_karyawan,
+            'name'          => $request->name,
+            'ktp'           => $request->ktp,
             'alamat'        => $request->alamat,
-            'bank'          => $request->bank,
-            'norek'         => $request->norek,
-            'namab'         => $request->namab,
-            'created_on'    => $request->created_on,
-            'password'      => Hash::make($request->password),
-            'email'         => $request->email,
-            'active'        => $request->active,
-            'photo'         => $request->photo,
-            'jadwal_id'     => $request->jadwal_id,
-            'cabang_id'     => $request->cabang_id,
+            'phone'         => $request->phone,
+            'pendidikan'    => $request->pendidikan,
+            'jk_kelamin'    => $request->jk_kelamin,
+            'jabatan_id'    => $request->jabatan_id,
+            'perusahaan_id' => $request->perusahaan_id,
+            'tgl_masuk'     => $request->tgl_masuk,
+            'status_id'     => $request->tgl_masuk,
             'status_id'     => $request->status_id,
-            'schedule_id'   => $request->schedule_id,
+            'phone_saudara' => $request->phone_saudara,
+            'photo'         => $request->photo,
+            'gaji_pokok'    => $request->gaji_pokok,
+            'jam_kerja'     => $request->jam_kerja,
+            'rate_gaji'     => $request->rate_gaji,
+            'password'      => Hash::make($request->password),
+            'bank_id'       => $request->bank_id,
+            'no_rek'        => $request->no_rek,
         ]);
 
         return response()->json([

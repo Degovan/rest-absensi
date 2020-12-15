@@ -7,9 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
-use App\User;
-use App\Harian;
-use App\Attendance;
+use App\Models\Karyawan;
+use App\Models\Absen;
+use App\Models\Raker;
 
 class KaryawanAbsenController extends Controller
 {
@@ -43,25 +43,22 @@ class KaryawanAbsenController extends Controller
         
         // Absen 
         $api_token          = $request->api_token;
-        $employee           = User::where('api_token', $api_token)->get()[0];
+        $karyawan           = Karyawan::where('api_token', $api_token)->get()[0];
         $current_date       = date('Y-m-d');
-        $attendance_exists  = Attendance::where('employee_id', $employee->id)->where('date', $current_date)->count();
+        $attendance_exists  = Absen::where('karyawan_id', $karyawan->id)->where('tanggal', $current_date)->count();
 
         if($attendance_exists > 0) {
             return response()->json([
                 'code'    => 401,
                 'success' => (boolean) false,
-                'message' => 'error, the employee has made an absence',
+                'message' => 'error, karyawan has made an absence',
             ], 401);
         }
 
         $current_time   = date('H:i:s');
-        $time_in        = $employee->jadwal->time_in;
-        $status         = $time_in >= $current_time;
-        $telat          = ( !$status ) ? ( strtotime($current_time) - strtotime($time_in) ) / 60 : 0;
 
-        $rencana_kerja_obj = $this->storeRencanaKerja($request->rencana_kerja, $request->hasil_kerja, $employee);
-
+        $rencana_kerja_obj = $this->storeRencanaKerja($request->rencana_kerja, $karyawan);
+        return response()->json([$rencana_kerja_obj]);
         if(!$rencana_kerja_obj) {
             return response()->json([
                 'code'    => 401,
@@ -79,15 +76,14 @@ class KaryawanAbsenController extends Controller
             ], 401);
         }
 
-        $attendance = Attendance::create([
-            'employee_id'   => $employee->id,
-            'date'          => $current_date,
-            'time_in'       => $current_time,
-            'status'        => $time_in >= $current_time,
-            'telat'         => $telat,
-            'latitude'      => $request->lt,
-            'longitude'     => $request->lo,
-            'address'       => $request->address,
+
+        $attendance = Absen::create([
+            'karyawan_id'   => $karyawan->id,
+            'status'        => 'ok',
+            'alasan'        => 'ini alasan',
+            'photo'         => 'ini photo',
+            'tanggal'       => $current_date,
+            'jam_masuk'     => $current_time,
         ]);
 
         return response()->json([
@@ -96,7 +92,7 @@ class KaryawanAbsenController extends Controller
             'message'           => 'successfully, the employee absence has been created',
             'data'              => [
                 'absen_harian'      => Attendance::find($attendance->id), 
-                'rencana_kerja'     => Harian::where('date_harian', $current_date)->where('employee_id', $employee->id)->get(),
+                'rencana_kerja'     => Raker::where('date_harian', $current_date)->where('employee_id', $employee->id)->get(),
             ]
         ], 200);
     }
@@ -106,7 +102,7 @@ class KaryawanAbsenController extends Controller
      *
      * @param array rencana_kerja
      */
-    public function storeRencanaKerja($rencana_kerja_arr, $hasil_kerja, $employee)
+    public function storeRencanaKerja($rencana_kerja_arr, $karyawan)
     {
         $current_date            = date('Y-m-d');
 
@@ -120,26 +116,24 @@ class KaryawanAbsenController extends Controller
             }
         }
 
+        $arr_rencana_kerja_obj = [];
+
         foreach($rencana_kerja_arr as $rencana_kerja) {
-            $rencana_kerja_obj = Harian::create([
-                'date_harian'       => $current_date,
-                'employee_id'       => $employee->id,
-                'school_id'         => $employee->school_id,
-                'cabang_id'         => $employee->cabang_id,
-                'lokasi_id'         => 1,
-                'jabker_id'         => 1,
-                'nohp'              => $employee->contact_info,
-                'job'               => $employee->position->description,
-                'position_id'       => $employee->position_id,
-                'renke'             => $rencana_kerja['text'],
+            $arr_rencana_kerja_obj[] = Raker::create([
+                'karyawan_id'       => $karyawan->karyawan_id,
+                'title'             => $rencana_kerja['text'],
+                'desk'              => $rencana_kerja['deskripsi'],
+                'tgl_mulai'         => $current_date,
+                'tgl_selesai'       => $current_date,
                 'status'            => $rencana_kerja['status'],
-                'evaluasi'          => '-',
-                'solusi'            => '-',
-                'hasil_kerja'       => $hasil_kerja,
+                'note'              => 'ok',
+                'solusi'            => 'ini solusi',
+                'photo'             => 'ini photo',
+                'nilai'             => 5,
             ]);
         }
 
-        return $rencana_kerja_obj;
+        return $arr_rencana_kerja_obj;
     }
 
     public function absenPulang(Request $request) 
@@ -206,7 +200,7 @@ class KaryawanAbsenController extends Controller
         }
 
         $api_token          = $request->api_token;
-        $employee           = User::where('api_token', $api_token)->get()[0];
+        $employee           = Karyawan::where('api_token', $api_token)->get()[0];
         $current_date       = date('Y-m-d');
         $attendance         = Attendance::where('employee_id', $employee->id)->where('date', $current_date)->first();
 
@@ -234,7 +228,7 @@ class KaryawanAbsenController extends Controller
         }
 
         foreach($request->rencana_kerja as $rencana_kerja) {
-            $rencana_kerja_obj = Harian::create([
+            $rencana_kerja_obj = Raker::create([
                 'date_harian'       => $current_date,
                 'employee_id'       => $employee->id,
                 'school_id'         => $employee->school_id,
@@ -267,7 +261,7 @@ class KaryawanAbsenController extends Controller
     public function deleteAbsen(Request $request)
     {
         $api_token          = $request->api_token;
-        $employee           = User::where('api_token', $api_token)->firstOrFail();
+        $employee           = Karyawan::where('api_token', $api_token)->firstOrFail();
         $current_date       = date('Y-m-d');
         $attendance         = Attendance::where('employee_id', $employee->id)->where('date', $current_date)->first();
 

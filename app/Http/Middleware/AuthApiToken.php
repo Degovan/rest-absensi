@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use Illuminate\Support\Facades\Validator;
 
 use Closure;
-use App\User;
+use App\Models\Karyawan;
 
 class AuthApiToken
 {
@@ -33,7 +33,7 @@ class AuthApiToken
 
         // Check token is match 
         $api_token = $request->api_token;
-        $employee = User::select(['id'])->where('api_token', $api_token)->get();
+        $employee = Karyawan::select(['karyawan_id'])->where('api_token', $api_token)->get();
 
         if($employee->count() < 1) {
             return response()->json([
