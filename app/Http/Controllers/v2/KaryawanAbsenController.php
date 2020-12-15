@@ -233,23 +233,19 @@ class KaryawanAbsenController extends Controller
     public function deleteAbsen(Request $request)
     {
         $api_token          = $request->api_token;
-        $employee           = Karyawan::where('api_token', $api_token)->firstOrFail();
         $current_date       = date('Y-m-d');
-        $attendance         = Attendance::where('employee_id', $employee->id)->where('date', $current_date)->first();
 
-        if( is_null($attendance) ) {
-            return response()->json([
-                'code'      => 404,
-                'success'   => (boolean) false,
-                'message'   => 'error, the employee has not been absent',
-            ], 404);
+        $karyawan = Karyawan::where('api_token', $api_token)->firstOrFail();
+
+        $absens = Absen::where('karyawan_id', $karyawan->karyawan_id)->where('tanggal', $current_date)->get();
+        $rakers = Raker::where('tgl_mulai', $current_date)->where('karyawan_id', $karyawan->karyawan_id)->get();
+
+        foreach($absens as $absen) {
+            $absen->delete();
         }
-        $attendance->delete();
-        
-        $rencana_kerja_db_arr = Harian::where('date_harian', $current_date)->where('employee_id', $employee->id)->get();
 
-        foreach($rencana_kerja_db_arr as $rencana_kerja_db) {
-            $rencana_kerja_db->delete();
+        foreach($rakers as $raker) {
+            $raker->delete();
         }
         
         return response()->json([

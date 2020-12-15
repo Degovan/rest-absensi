@@ -24,4 +24,9 @@ class Karyawan extends Authenticatable
     {
         return $this->hasMany(JobDesk::class, 'karyawan_id', 'karyawan_id');
     }
+
+    public function perusahaan()
+    {
+        return $this->hasOne(Perusahaan::class, 'perusahaan_id', 'perusahaan_id');
+    }
 }
