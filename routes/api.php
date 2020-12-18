@@ -57,7 +57,8 @@ Route::middleware(['auth.api-token'])->group(function() {
     Route::post('/v2/karyawan-pulang', 'v2\KaryawanAbsenController@absenPulang');
     Route::post('/v2/karyawan-absen/delete', 'v2\KaryawanAbsenController@deleteAbsen');
     Route::post('/v2/logout', 'v2\AuthKaryawanController@logout');
-    Route::get('/v2/rencana-kerja-hari-ini', 'v2\RencanaKerjaController@getRakerHariIni');
+    Route::post('/v2/rencana-kerja-hari-ini', 'v2\RencanaKerjaController@getRakerHariIni');
+    Route::post('/v2/pengumuman', 'v2\PengumumanController@getPengumuman');
 });
 
 // For Admin

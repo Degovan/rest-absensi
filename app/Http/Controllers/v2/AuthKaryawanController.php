@@ -61,7 +61,7 @@ class AuthKaryawanController extends Controller
             return response()->json([
                 'code'      => 400,
                 'success'   => (boolean) false,
-                'message'   => "error, kode karyawan and password don't match",
+                'message'   => "error, Kode karyawan and password don't match",
                 'data'      => [
                     'old_value'  => [
                         'kd_karyawan'     => $request->kd_karyawan,

@@ -11,6 +11,7 @@ use DB;
 use App\Models\Karyawan;
 use App\Models\Absen;
 use App\Models\Raker;
+use App\Models\Jobdesk;
 
 class KaryawanAbsenController extends Controller
 {
@@ -55,6 +56,22 @@ class KaryawanAbsenController extends Controller
             ], 401);
         }
 
+        $all_jobdesk_id = [];
+        foreach ( $rencana_kerja_obj as $rencana_kerja ) {
+            if( !in_array($rencana_kerja->jobdesk_id, $all_jobdesk_id) ) {
+                $all_jobdesk_id[] = $rencana_kerja->jobdesk_id;
+            }
+        }
+
+        $valid_respon_to_client = [];
+        foreach ( $all_jobdesk_id as $jobdesk_id ) {
+            $valid_respon_to_client[] = [
+                'jobdesk_id'    => $jobdesk_id,
+                'jobdesk'       => Jobdesk::where('jobdesk_id', $jobdesk_id)->firstOrFail()->name,
+                'rencana_kerja' => $this->getRakerTodayByJobdesk($request->rencana_kerja, $jobdesk_id, $karyawan),
+            ];
+        }
+
         $absen = Absen::create([
             'karyawan_id'   => $karyawan->karyawan_id,
             'status'        => $request->status_absen,
@@ -70,7 +87,7 @@ class KaryawanAbsenController extends Controller
             'message'           => 'successfully, the employee absence has been created',
             'data'              => [
                 'absen_harian'      => Absen::where('karyawan_id', $karyawan->karyawan_id)->orderBy('absen_id', 'DESC')->firstOrFail(), 
-                'rencana_kerja'     => $rencana_kerja_obj === true ? [] : $rencana_kerja_obj,
+                'jobdesk'           => $valid_respon_to_client,
             ]
         ], 200);
     }
@@ -83,18 +100,13 @@ class KaryawanAbsenController extends Controller
     public function storeRencanaKerja($rencana_kerja_arr, $karyawan)
     {
         $current_date            = date('Y-m-d');
+        $current_date_raker      = date('Y-m-d H:i:s');
 
         if(gettype($rencana_kerja_arr[0]) != 'array') {
             return false;
         }
 
-        foreach($rencana_kerja_arr as $rencana_kerja) {
-            if(!array_key_exists('text', $rencana_kerja) && !array_key_exists('status', $rencana_kerja)) {
-                return false;
-            }
-        }
-
-        $raker_index_name = ['title', 'deskripsi', 'status'];
+        $raker_index_name = ['desk', 'status'];
         foreach($rencana_kerja_arr as $rencana_kerja) {
             foreach($raker_index_name as $raker_name) {
                 if($rencana_kerja[$raker_name] == '' || $rencana_kerja[$raker_name] == null) {
@@ -106,18 +118,32 @@ class KaryawanAbsenController extends Controller
         $arr_rencana_kerja_obj = [];
 
         foreach($rencana_kerja_arr as $rencana_kerja) {
-            $arr_rencana_kerja_obj[] = Raker::create([
-                'karyawan_id'       => $karyawan->karyawan_id,
-                'jobdesk_id'        => $rencana_kerja['jobdesk_id'],
-                'desk'              => $rencana_kerja['title'],
-                'tgl_mulai'         => $current_date,
-                'tgl_selesai'       => null,
-                'status'            => $rencana_kerja['status'],
-                'note'              => '',
-                'solusi'            => '',
-                'photo'             => '',
-                'nilai'             => 0,
-            ]);
+            if($rencana_kerja['raker_id'] === 0) {
+                $arr_rencana_kerja_obj[] = Raker::create([
+                    'karyawan_id'       => $karyawan->karyawan_id,
+                    'jobdesk_id'        => $rencana_kerja['jobdesk_id'],
+                    'desk'              => $rencana_kerja['desk'],
+                    'tgl_mulai'         => $current_date_raker,
+                    'tgl_selesai'       => null,
+                    'status'            => $rencana_kerja['status'],
+                    'note'              => '',
+                    'solusi'            => '',
+                    'photo'             => '',
+                    'nilai'             => 0,
+                    'tgl_hari_ini'      => $current_date
+                ]);
+            } else if($rencana_kerja['status'] == 'selesai') {
+                Raker::where('raker_id', $rencana_kerja['raker_id'])->firstOrFail()->update([
+                    'jobdesk_id'        => $rencana_kerja['jobdesk_id'],
+                    'desk'              => $rencana_kerja['desk'],
+                    'tgl_selesai'       => $current_date_raker,
+                    'status'            => $rencana_kerja['status'],
+                ]);
+
+                $arr_rencana_kerja_obj[] = Raker::where('raker_id', $rencana_kerja['raker_id'])->firstOrFail();
+            } else {
+                $arr_rencana_kerja_obj[] = Raker::where('raker_id', $rencana_kerja['raker_id'])->firstOrFail();
+            }
         }
 
         return $arr_rencana_kerja_obj;
@@ -125,37 +151,10 @@ class KaryawanAbsenController extends Controller
 
     public function absenPulang(Request $request) 
     {
-        if(gettype($request->rencana_kerja[0]) != 'array') {
-            return response()->json([
-                'code'    => 401,
-                'success' => (boolean) false,
-                'message' => 'rencana kerja must be array of object and have key : text & status',
-                'data'    => [
-                    'old_value'          => [
-                        'rencana_kerja'     => $request->rencana_kerja,
-                    ],
-                ]
-            ], 401);
-        }
-
-        foreach($request->rencana_kerja as $rencana_kerja) {
-            if(!array_key_exists('text', $rencana_kerja) && !array_key_exists('status', $rencana_kerja)) {
-                return response()->json([
-                    'code'    => 401,
-                    'success' => (boolean) false,
-                    'message' => 'rencana kerja must be array of object and have key : text & status',
-                    'data'    => [
-                        'old_value'          => [
-                            'rencana_kerja'     => $request->rencana_kerja,
-                        ],
-                    ]
-                ], 401);
-            }
-        }
-
         $api_token          = $request->api_token;
         $karyawan           = Karyawan::where('api_token', $api_token)->firstOrFail();
         $current_date       = date('Y-m-d');
+        $current_date_raker = date('Y-m-d H:i:s');
         $absen              = Absen::where('karyawan_id', $karyawan->karyawan_id)->where('tanggal', $current_date)->firstOrFail();
 
         if( is_null($absen) ) {
@@ -175,24 +174,27 @@ class KaryawanAbsenController extends Controller
             'lama_kerja'      => $lama_kerja,
             'hasil_kerja'     => $request->hasil_kerja,
         ]);
-
-        $rencana_kerja_db_arr = Raker::where('tgl_mulai', $current_date)->where('karyawan_id', $karyawan->karyawan_id)->get();
-        $rencana_kerja_obj = [];
-
+        
         foreach($request->rencana_kerja as $rencana_kerja) {
             if( $rencana_kerja['status'] == 'selesai' ) {
                 $raker_done = Raker::where('raker_id', $rencana_kerja['raker_id'])->firstOrFail();
                 $raker_done->update([
-                    'tgl_selesai'   => $current_date,
-                    'status'        => $rencana_kerja['status'],
+                    'tgl_selesai'       => $current_date_raker,
+                    'status'            => $rencana_kerja['status'],
+                    'desk'              => $rencana_kerja['desk'],
                 ]);
+
+                $rencana_kerja_obj[] = $raker_done;
             }
         }
-        
-        foreach($rencana_kerja_db_arr as $key => $rencana_kerja) {
-            $rencana_kerja_obj[] = $rencana_kerja;
-        }
 
+        $rencana_kerja_obj = [];
+        foreach($request->rencana_kerja as $rencana_kerja) {
+            $raker_done = Raker::where('raker_id', $rencana_kerja['raker_id'])->firstOrFail();
+
+            $rencana_kerja_obj[] = $raker_done;
+        }
+        
         return response()->json([
             'code'      => 200,
             'success'   => (boolean) true,
@@ -200,7 +202,7 @@ class KaryawanAbsenController extends Controller
             'data'      => [
                 'karyawan'          => $karyawan,
                 'absen'             => $absen,
-                'rencana_kerja'     => $rencana_kerja_db_arr,
+                'rencana_kerja'     => $rencana_kerja_obj,
             ],
         ], 200);
     }
@@ -209,11 +211,12 @@ class KaryawanAbsenController extends Controller
     {
         $api_token          = $request->api_token;
         $current_date       = date('Y-m-d');
+        $current_date_raker = date('Y-m-d H:i:s');
 
         $karyawan = Karyawan::where('api_token', $api_token)->firstOrFail();
 
         $absens = Absen::where('karyawan_id', $karyawan->karyawan_id)->where('tanggal', $current_date)->get();
-        $rakers = Raker::where('tgl_mulai', $current_date)->where('karyawan_id', $karyawan->karyawan_id)->get();
+        $rakers = Raker::where('tgl_hari_ini', $current_date)->where('karyawan_id', $karyawan->karyawan_id)->get();
 
         foreach($absens as $absen) {
             $absen->delete();
@@ -228,5 +231,18 @@ class KaryawanAbsenController extends Controller
             'success' => (boolean) true,
             'message' => 'successfully, the employee absent has been deleted',
         ], 200); 
+    }
+
+    public function getRakerTodayByJobdesk($arr_rencana_kerja, $jobdesk_id, $karyawan)
+    {
+        $arr_rencana_kerja_valid = [];
+
+        foreach($arr_rencana_kerja as $rencana_kerja) {
+            if( $rencana_kerja['jobdesk_id'] == $jobdesk_id ) {
+                $arr_rencana_kerja_valid[] = Raker::where('jobdesk_id', $jobdesk_id)->where('desk', $rencana_kerja['desk'])->where('status', $rencana_kerja['status'])->where('karyawan_id', $karyawan->karyawan_id)->firstOrFail();
+            }
+        }
+
+        return $arr_rencana_kerja_valid;
     }
 }
