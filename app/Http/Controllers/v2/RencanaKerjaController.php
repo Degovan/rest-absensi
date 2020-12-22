@@ -15,6 +15,7 @@ class RencanaKerjaController extends Controller
 {
     public function getRakerHariIni(Request $request)
     {
+        
         $api_token              = $request->api_token;
         $current_date           = date('Y-m-d');
         $karyawan               = Karyawan::where('api_token', $api_token)->firstOrFail();
@@ -28,16 +29,37 @@ class RencanaKerjaController extends Controller
                 'rencana_kerja'     => $this->getRaker($jobdesk->jobdesk_id, $karyawan, $current_date),
             ];
         }
-
+        
+        if( Absen::where('karyawan_id', $karyawan->karyawan_id)->count() < 1 ) {
+            return response()->json([
+                'code'      => 200,
+                'success'   => (boolean) true,
+                'data'      => [
+                    'status_absen'  => false,
+                    'jobdesk'       => $list_jobdesk
+                ],
+            ], 200);
+        } else {
+            return response()->json([
+                'code'      => 200,
+                'success'   => (boolean) true,
+                'data'      => [
+                    'status_absen'  => Absen::where('karyawan_id', $karyawan->karyawan_id)->orderBy('tanggal', 'DESC')->firstOrFail()->tanggal == $current_date,
+                    'jobdesk'       => $list_jobdesk
+                ],
+            ], 200);
+        }
+        
+        
+        
         return response()->json([
-            'code'      => 200,
-            'success'   => (boolean) true,
+            
             'message'   => 'successfully, mendapatkan rencana kerja hari ini',
             'data'      => [
-                'status_absen' => Absen::where('karyawan_id', $karyawan->karyawan_id)->orderBy('tanggal', 'DESC')->firstOrFail()->tanggal == $current_date,
+
                 'jobdesk' => $list_jobdesk
             ]
-        ]);
+        ], 200);
     }
 
     public function getRaker($jobdesk_id, $karyawan, $current_date)
