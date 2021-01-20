@@ -28,7 +28,7 @@ class AuthApiToken
                 'code'    => 401,
                 'success' => (boolean) false,
                 'message' => 'api token is required',
-            ], 401);
+            ], 200);
         }
 
         // Check token is match 
@@ -40,7 +40,7 @@ class AuthApiToken
                 'code'      => 401,
                 'success'   => (boolean) false,
                 'message'   => 'api token is invalid',
-            ], 401);
+            ], 200);
         }
 
         return $next($request);

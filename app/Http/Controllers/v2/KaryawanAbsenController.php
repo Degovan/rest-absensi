@@ -28,7 +28,7 @@ class KaryawanAbsenController extends Controller
                 'code'    => 401,
                 'success' => (boolean) false,
                 'message' => 'error, karyawan has made an absence',
-            ], 401);
+            ], 200);
         }
 
         $current_time   = date('H:i:s');
@@ -53,7 +53,7 @@ class KaryawanAbsenController extends Controller
                         'hasil_kerja'       => $request->hasil_kerja,     
                     ],
                 ]
-            ], 401);
+            ], 200);
         }
 
         $all_jobdesk_id = [];
@@ -79,6 +79,7 @@ class KaryawanAbsenController extends Controller
             'photo'         => 'ini photo',
             'tanggal'       => $current_date,
             'jam_masuk'     => $current_time,
+            'alamat'        => $request->address,
         ]);
 
         return response()->json([
@@ -162,7 +163,7 @@ class KaryawanAbsenController extends Controller
                 'code'      => 404,
                 'success'   => (boolean) false,
                 'message'   => 'error, karyawan has not been absent',
-            ], 404);
+            ], 200);
         }
 
 

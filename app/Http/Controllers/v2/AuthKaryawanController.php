@@ -36,7 +36,7 @@ class AuthKaryawanController extends Controller
                     ],
                     'errors_validation' => $validator->errors(),
                 ]
-            ], 401);
+            ], 200);
         }
 
         $credentials = ['kd_karyawan' => $request->kd_karyawan, 'password' => $request->password];
@@ -67,7 +67,7 @@ class AuthKaryawanController extends Controller
                         'kd_karyawan'     => $request->kd_karyawan,
                     ]
                 ]
-            ], 400);
+            ], 200);
         }
     }
 

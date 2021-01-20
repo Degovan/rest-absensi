@@ -30,6 +30,6 @@ class PengumumanController extends Controller
             'data'      => [
                 'pengumuman'  => $pengumuman
             ],
-        ]);
+        ], 200);
     }
 }

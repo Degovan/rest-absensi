@@ -52,7 +52,7 @@ class KaryawanController extends Controller
                     'old_value'         => $request->all(),
                     'errors_message'    => $validator->errors()
                 ]
-            ], 401);
+            ], 200);
         }
 
         $employee_id = $this->generateEmployeeId(3, 9);
@@ -73,7 +73,7 @@ class KaryawanController extends Controller
                 'data'      => [
                     'old_value'     => $request->all(),
                 ],
-            ], 401);
+            ], 200);
         }
 
         $employee = User::create([
@@ -116,7 +116,7 @@ class KaryawanController extends Controller
             'data'      => [
                 'employee'   => User::where('employee_id', $employee_id)->first(),
             ]
-        ]);
+        ], 200);
     }
     
     public function generateEmployeeId($str_length, $number_length)
